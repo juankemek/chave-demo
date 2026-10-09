@@ -437,6 +437,7 @@ details.mais .form{padding:0;margin-top:12px;border:0;background:none;box-shadow
 }
 .lead .mv button[data-mv]{flex:1 1 auto;min-height:30px}
 .l-erro{margin:-4px 0 0;color:var(--crit);font-size:13px;font-weight:600}
+.btnx{font-weight:600;font-size:12px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:1px 8px}
 </style>
 
 </head>
@@ -604,9 +605,9 @@ details.mais .form{padding:0;margin-top:12px;border:0;background:none;box-shadow
       </div>
     </div>
     <div class="sec dono" id="sec-equipe" hidden>
-      <div class="topbar"><div><span class="lbl">Quem acessa o painel</span><h1>Equipe e acessos</h1></div><div class="acts"><button class="btn" data-act="convidar"><svg class="i"><use href="#i-plus"/></svg>Convidar corretor</button></div></div>
+      <div class="topbar"><div><span class="lbl">Quem acessa o painel</span><h1>Equipe e acessos</h1></div><div class="acts"><button class="btn" data-act="pessoa-nova"><svg class="i"><use href="#i-plus"/></svg>Adicionar pessoa</button></div></div>
       <div class="row2">
-        <div class="panel"><div class="panel-h"><h2>Pessoas</h2></div><div class="tablewrap"><table id="tab-eq"></table></div></div>
+        <div class="panel"><div class="panel-h"><h2>Pessoas</h2><span class="muted" style="font-size:13px">toque em Editar para mudar usuário e senha</span></div><div class="tablewrap"><table id="tab-eq"></table></div></div>
         <div class="panel"><div class="panel-h"><h2>O que cada papel pode fazer</h2></div><div class="tablewrap"><table class="perm" id="perm"></table></div>
           <p class="muted" style="font-size:13px;margin-top:12px">Quem procura imóvel não tem login: só vê o site. Os dados do proprietário nunca aparecem no site.</p></div>
       </div>
@@ -655,7 +656,7 @@ const TIPOS={"Apartamento":["AP","#60a5fa"],"Casa":["CA","#f59e0b"],"Terreno":["
 const TAXA_VENDA=6, TAXA_ADM=10;
 function seed(){return{
  loja:{nome:"Casa Sul Imóveis",slug:"casasul",slogan:"Seu próximo endereço em Pelotas",cid:"Pelotas/RS",wpp:"(53) 99999-0000",creci:"CRECI 00000-J",end:"Rua XV de Novembro, 600 · Centro",hor:"Seg a sex 9h–18h · Sáb 9h–12h",sobre:"Imobiliária familiar desde 2009. Vendemos e alugamos casas, apartamentos e terrenos em Pelotas, e cuidamos de toda a papelada, da proposta à entrega das chaves.",cor:"#0f766e"},
- equipe:[{id:1,nome:"Ricardo Moura",email:"ricardo@casasul.com.br",papel:"Dono",com:0},{id:2,nome:"Aline Duarte",email:"aline@casasul.com.br",papel:"Corretor",com:40},{id:3,nome:"Bruno Costa",email:"bruno@casasul.com.br",papel:"Corretor",com:40}],
+ equipe:[{id:1,nome:"Ricardo Moura",email:"ricardo@casasul.com.br",papel:"Dono",com:0,usuario:"admin",senha:"1234",ativo:true},{id:2,nome:"Aline Duarte",email:"aline@casasul.com.br",papel:"Corretor",com:40,usuario:"vendedor",senha:"1234",ativo:true},{id:3,nome:"Bruno Costa",email:"bruno@casasul.com.br",papel:"Corretor",com:40,usuario:"bruno",senha:"1234",ativo:true}],
  adm:{contratos:38,receita:7600},
  imoveis:[
   {id:1,ref:"AP-101",tipo:"Apartamento",fin:"Venda",titulo:"Apartamento de 2 dormitórios com sacada",bairro:"Centro",end:"Rua Anchieta, 2100 · ap. 504",area:68,q:2,s:1,b:2,v:1,preco:385000,cond:520,iptu:95,aval:395000,prop:{nome:"Helena Prates",tel:"(53) 98100-1111"},entrada:"2026-09-10",venc:"2027-03-10",exc:true,status:"Disponível",docs:{matricula:true,autorizacao:true,iptu:true,chaves:true},visitas:284,desc:"Quinto andar, sol da manhã, sacada com churrasqueira e vaga de garagem coberta. A duas quadras da Praça Coronel Pedro Osório."},
@@ -701,6 +702,8 @@ function seed(){return{
 const KEY="chave-demo-v1";
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||!S.imoveis)S=seed();
+(function(){let v=0;(S.equipe||[]).forEach(p=>{if(!p.usuario){if(p.papel==="Dono"&&!S.equipe.some(x=>x.usuario==="admin"))p.usuario="admin";else if(p.papel!=="Dono"&&!S.equipe.some(x=>x.usuario==="vendedor"))p.usuario="vendedor";else{let b=p.nome.split(" ")[0].toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g,"")||"pessoa",u=b,i=2;while(S.equipe.some(x=>x.usuario===u))u=b+i++;p.usuario=u}p.senha=p.senha||"1234";if(p.ativo===undefined)p.ativo=true}})})();
+const EQ=()=>S.equipe.filter(p=>!p.removido);
 let USER=null;try{USER=JSON.parse(sessionStorage.getItem("chave-user"))}catch(e){}
 function salvar(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){if(/quota/i.test(e.name+e.message)&&typeof toast==="function")toast("O espaço da demonstração encheu. Remova algumas fotos. No sistema real as fotos ficam guardadas na nuvem, sem esse limite.");return !/quota/i.test(e.name+e.message)}}
 function lerFotos(files){return Promise.all([...files].filter(f=>f.type.startsWith("image/")).slice(0,20).map(f=>new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const W=1000,sc=Math.min(1,W/im.width),cv=document.createElement("canvas");cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL("image/jpeg",0.72))};im.onerror=()=>res(null);im.src=r.result};r.onerror=()=>res(null);r.readAsDataURL(f)}))).then(a=>a.filter(Boolean))}
@@ -870,7 +873,7 @@ function renderAgenda(){
 function renderNegocios(){
  const ns=S.imoveis.filter(m=>m.neg).sort((a,b)=>b.neg.data.localeCompare(a.neg.data));
  $("#tab-neg").innerHTML=`<thead><tr><th>Data</th><th>Imóvel</th><th class="hide-m">Cliente</th><th class="hide-m">Corretor</th><th>Tipo</th><th class="r">Valor</th>${isDono()?'<th class="r">Comissão</th><th class="r hide-m">Parte do corretor</th>':""}</tr></thead><tbody>`+(ns.map(m=>{const p=pessoa(m.neg.corr)||{nome:"—",com:0};return `<tr class="click" data-im="${m.id}"><td class="num">${fd(m.neg.data)}</td><td>${esc(m.ref)} · ${esc(curto(m))}</td><td class="hide-m">${esc(m.neg.cli)}</td><td class="hide-m">${esc(p.nome)}</td><td>${m.fin==="Venda"?"Venda":"Locação"}</td><td class="r num">${R(m.neg.valor)}${m.fin==="Aluguel"?"/mês":""}</td>${isDono()?`<td class="r num pos">${R(comissao(m))}</td><td class="r num hide-m">${R(comissao(m)*p.com/100)}</td>`:""}</tr>`}).join("")||`<tr><td colspan="8" class="muted">Nenhum negócio ainda.</td></tr>`)+"</tbody>";
- hbars("#rank",S.equipe.filter(p=>p.papel!=="Dono"||S.imoveis.some(m=>negMes(m)&&m.neg.corr===p.id)).map(p=>[p.nome.split(" ")[0],S.imoveis.filter(m=>negMes(m)&&m.neg.corr===p.id).length]),v=>v+(v===1?" negócio":" negócios"));
+ hbars("#rank",EQ().filter(p=>p.papel!=="Dono"||S.imoveis.some(m=>negMes(m)&&m.neg.corr===p.id)).map(p=>[p.nome.split(" ")[0],S.imoveis.filter(m=>negMes(m)&&m.neg.corr===p.id).length]),v=>v+(v===1?" negócio":" negócios"));
 }
 function lancamentos(){const nm=S.imoveis.filter(negMes),rows=[];
  nm.forEach(m=>{rows.push([m.neg.data,(m.fin==="Venda"?"Comissão de venda · ":"Intermediação de locação · ")+m.ref,m.fin==="Venda"?"Vendas":"Locações",comissao(m)]);const p=pessoa(m.neg.corr);if(p&&p.com)rows.push([m.neg.data,"Repasse ao corretor · "+p.nome,"Repasses",-comissao(m)*p.com/100])});
@@ -899,8 +902,8 @@ function renderRel(){
  hbars("#r-funil",[["Chegaram",n],["Atendidos",S.leads.filter(l=>ord(l.etapa)>=1).length],["Visitaram",S.leads.filter(l=>ord(l.etapa)>=2).length],["Fizeram proposta",S.leads.filter(l=>ord(l.etapa)>=3).length],["Fecharam",S.leads.filter(l=>ord(l.etapa)===4).length]],v=>v+" ("+Math.round(v/Math.max(1,n)*100)+"%)");
 }
 function renderEquipe(){
- $("#tab-eq").innerHTML=`<thead><tr><th>Nome</th><th>Papel</th><th class="r">Parte da comissão</th></tr></thead><tbody>`+S.equipe.map(p=>`<tr><td><div class="car"><div class="av">${ini(p.nome)}</div><div><b>${esc(p.nome)}</b><small>${esc(p.email)}</small></div></div></td><td><span class="pill ${p.papel==="Dono"?"p-ok":"p-info"}">${esc(p.papel)}</span></td><td class="r num">${p.com?String(p.com).replace(".",",")+"%":"—"}</td></tr>`).join("")+"</tbody>";
- const P=[["Ver e cadastrar imóveis",1,1],["Ver dados do proprietário",1,1],["Interessados e agenda",1,1],["Registrar venda ou locação",1,1],["Ver comissões da imobiliária",1,0],["Financeiro e relatórios",1,0],["Convidar corretores",1,0],["Mudar nome e dados do site",1,0]];
+ $("#tab-eq").innerHTML=`<thead><tr><th>Pessoa</th><th>Papel</th><th class="r hide-m">${COMLBL}</th><th class="hide-m">Acesso</th><th class="r hide-m">Ação</th></tr></thead><tbody>`+EQ().map(p=>`<tr class="click" data-pessoa="${p.id}"><td><div class="car"><div class="av">${ini(p.nome)}</div><div><b>${esc(p.nome)}${USER&&USER.id===p.id?' <span class="pill p-mut">você</span>':""}</b><small>usuário: <b class="num">${esc(p.usuario)}</b></small><span class="show-m"><span class="pill ${p.ativo!==false?"p-ok":"p-crit"}">${p.ativo!==false?"Liberado":"Bloqueado"}</span><span class="btnx">Editar</span></span></div></div></td><td><span class="pill ${p.papel==="Dono"?"p-ok":p.papel===VEND?"p-info":"p-warn"}">${esc(p.papel)}</span></td><td class="r num hide-m">${p.com?String(p.com).replace(".",",")+"%":"—"}</td><td class="hide-m"><span class="pill ${p.ativo!==false?"p-ok":"p-crit"}">${p.ativo!==false?"Liberado":"Bloqueado"}</span></td><td class="r hide-m"><button type="button" class="btn xs soft" data-pessoa="${p.id}">Editar</button></td></tr>`).join("")+"</tbody>";
+ const P=[["Ver e cadastrar imóveis",1,1],["Ver dados do proprietário",1,1],["Interessados e agenda",1,1],["Registrar venda ou locação",1,1],["Ver comissões da imobiliária",1,0],["Financeiro e relatórios",1,0],["Cadastrar e editar a equipe",1,0],["Mudar nome e dados do site",1,0]];
  $("#perm").innerHTML=`<thead><tr><th>Permissão</th><th>Dono</th><th>Corretor</th></tr></thead><tbody>`+P.map(p=>`<tr><td>${p[0]}</td><td class="${p[1]?"yes":"no"}">${p[1]?"✓":"—"}</td><td class="${p[2]?"yes":"no"}">${p[2]?"✓":"—"}</td></tr>`).join("")+"</tbody>";
 }
 const LJ=["nome","slug","slogan","cid","wpp","creci","end","hor","sobre"];
@@ -938,7 +941,7 @@ function ficha(id,tab){
  if(TAB==="docs")body=`<div class="checks">${[["matricula","Matrícula atualizada"],["autorizacao","Autorização do proprietário assinada"],["iptu","IPTU em dia"],["chaves","Chaves na imobiliária"]].map(d=>`<label><input type="checkbox" data-doc="${d[0]}" ${m.docs[d[0]]?"checked":""}>${d[1]}</label>`).join("")}</div>
   <form class="form" id="f-venc"><label class="field">Autorização vence em<input id="fx-venc" type="date" value="${m.venc}"></label><label class="field">Exclusividade<select id="fx-exc"><option value="1" ${m.exc?"selected":""}>Sim</option><option value="0" ${m.exc?"":"selected"}>Não</option></select></label><button class="btn full soft" type="submit" style="justify-content:center">Salvar autorização</button></form>
   <p class="muted" style="font-size:12.5px">Itens pendentes e autorizações perto de vencer aparecem em "Precisam de atenção" na visão geral.</p>`;
- if(TAB==="fechar")body=`<form class="form" id="f-neg"><label class="field">${m.fin==="Venda"?"Valor da venda":"Aluguel fechado"} (R$)<input id="n-val" type="number" inputmode="numeric" value="${m.preco}" required></label><label class="field">Data<input id="n-dt" type="date" value="${HOJE}" required></label><label class="field full">${m.fin==="Venda"?"Comprador":"Inquilino"}<input id="n-cli" required placeholder="Nome completo"></label><label class="field">Corretor<select id="n-corr">${(()=>{const def=isDono()?(S.equipe.find(p=>p.papel==="Corretor")||{}).id:(S.equipe.find(p=>p.nome===USER.nome)||{}).id;return S.equipe.map(p=>`<option value="${p.id}" ${p.id===def?"selected":""}>${esc(p.nome)}</option>`).join("")})()}</select></label><label class="field">${m.fin==="Venda"?"Pagamento":"Garantia"}<select id="n-pag">${(m.fin==="Venda"?["À vista","Financiamento bancário","Financiamento + FGTS","Permuta"]:["Fiador","Seguro-fiança","Caução","Título de capitalização"]).map(o=>`<option>${o}</option>`).join("")}</select></label>${dono?`<div class="full lines num"><div class="tot"><span>Comissão da imobiliária</span><span id="n-com" class="pos"></span></div><div><span>Parte do corretor</span><span id="n-par"></span></div></div>`:""}<button class="btn full" type="submit" style="justify-content:center">Confirmar ${m.fin==="Venda"?"venda":"locação"}</button></form>`;
+ if(TAB==="fechar")body=`<form class="form" id="f-neg"><label class="field">${m.fin==="Venda"?"Valor da venda":"Aluguel fechado"} (R$)<input id="n-val" type="number" inputmode="numeric" value="${m.preco}" required></label><label class="field">Data<input id="n-dt" type="date" value="${HOJE}" required></label><label class="field full">${m.fin==="Venda"?"Comprador":"Inquilino"}<input id="n-cli" required placeholder="Nome completo"></label><label class="field">Corretor<select id="n-corr">${(()=>{const def=isDono()?(EQ().find(p=>p.papel==="Corretor")||{}).id:(EQ().find(p=>p.nome===USER.nome)||{}).id;return EQ().map(p=>`<option value="${p.id}" ${p.id===def?"selected":""}>${esc(p.nome)}</option>`).join("")})()}</select></label><label class="field">${m.fin==="Venda"?"Pagamento":"Garantia"}<select id="n-pag">${(m.fin==="Venda"?["À vista","Financiamento bancário","Financiamento + FGTS","Permuta"]:["Fiador","Seguro-fiança","Caução","Título de capitalização"]).map(o=>`<option>${o}</option>`).join("")}</select></label>${dono?`<div class="full lines num"><div class="tot"><span>Comissão da imobiliária</span><span id="n-com" class="pos"></span></div><div><span>Parte do corretor</span><span id="n-par"></span></div></div>`:""}<button class="btn full" type="submit" style="justify-content:center">Confirmar ${m.fin==="Venda"?"venda":"locação"}</button></form>`;
  $("#sheet").innerHTML=`<div class="sheet-head"><div><span class="lbl">${ref(m.ref)} ${esc(m.tipo)} · ${esc(m.bairro)}</span><h2 style="font-size:24px;margin-top:4px">${esc(m.titulo)}</h2><div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">${finPill(m.fin)} ${stPill(m.status)} ${diasPill(m)}</div></div><button class="x" data-close>Fechar</button></div>
   <div class="tabs" role="tablist">${tabs.map(t=>`<button role="tab" aria-selected="${t[0]===TAB}" data-tab="${t[0]}">${t[1]}</button>`).join("")}</div>${body}`;
  ov.hidden=false;
@@ -963,7 +966,7 @@ function formNovo(tipo){
  <details class="full mais"><summary>Mais detalhes (opcional, dá para preencher depois)</summary><div class="form"><label class="field full">Endereço (não aparece no site)<input id="n-end" value=""></label><label class="field">Suítes<input id="n-s" type="number" inputmode="numeric" min="0" value="1"></label><label class="field">Banheiros<input id="n-b" type="number" inputmode="numeric" min="0" value="2"></label><label class="field">Vagas<input id="n-v" type="number" inputmode="numeric" min="0" value="1"></label><label class="field">Condomínio (R$/mês)<input id="n-cond" type="number" inputmode="numeric" min="0" placeholder="0"></label><label class="field">IPTU (R$/mês)<input id="n-iptu" type="number" inputmode="numeric" min="0" placeholder="0"></label><label class="field">Avaliação (R$)<input id="n-aval" type="number" inputmode="numeric" placeholder="igual ao valor"></label><label class="field full">Descrição<textarea id="n-desc" rows="2">Sol da tarde, prédio com elevador, perto de mercado e farmácia.</textarea></label><label class="field full">Situação<select id="n-st"><option value="Disponível">Disponível (aparece no site)</option><option value="Em captação">Em captação (fica escondido)</option></select></label></div></details>
  <button class="btn full" type="submit" style="justify-content:center">Salvar imóvel</button></form>`}
  if(tipo==="novo-lead"){t="Novo interessado";h=`<form class="form" id="fn"><label class="field full">Nome<input id="n-nome" required></label><label class="field">WhatsApp<input id="n-tel" type="tel" inputmode="tel" data-tel autocomplete="tel" required></label><label class="field">Origem<select id="n-or"><option>WhatsApp</option><option>Instagram</option><option>Site</option><option>Portal</option><option>Indicação</option></select></label><label class="field full">Interesse<select id="n-im">${opIm}</select></label><label class="field full">Observação<textarea id="n-nota" rows="2" placeholder="Ex.: quer 2 quartos, aceita financiar"></textarea></label><button class="btn full" type="submit" style="justify-content:center">Salvar interessado</button></form>`}
- if(tipo==="nova-visita"){t="Agendar visita ou captação";h=`<form class="form" id="fn"><label class="field full">Nome do cliente ou proprietário<input id="n-cli" required></label><label class="field">Dia<input id="n-dia" type="date" required value="${addD(HOJE,1)}"></label><label class="field">Horário<input id="n-hora" type="time" required value="14:00"></label><label class="field">Tipo<select id="n-tp"><option value="Visita">Visita</option><option value="Captação">Captação (avaliar imóvel)</option></select></label><label class="field">Corretor<select id="n-corr">${S.equipe.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join("")}</select></label><label class="field full">Imóvel<select id="n-im">${opIm}</select></label><button class="btn full" type="submit" style="justify-content:center">Agendar</button></form>`}
+ if(tipo==="nova-visita"){t="Agendar visita ou captação";h=`<form class="form" id="fn"><label class="field full">Nome do cliente ou proprietário<input id="n-cli" required></label><label class="field">Dia<input id="n-dia" type="date" required value="${addD(HOJE,1)}"></label><label class="field">Horário<input id="n-hora" type="time" required value="14:00"></label><label class="field">Tipo<select id="n-tp"><option value="Visita">Visita</option><option value="Captação">Captação (avaliar imóvel)</option></select></label><label class="field">Corretor<select id="n-corr">${EQ().map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join("")}</select></label><label class="field full">Imóvel<select id="n-im">${opIm}</select></label><button class="btn full" type="submit" style="justify-content:center">Agendar</button></form>`}
  if(tipo==="nova-despesa"){t="Lançar despesa";h=`<form class="form" id="fn"><label class="field full">Descrição<input id="n-desc" required placeholder="Ex.: placas de vende-se"></label><label class="field">Categoria<select id="n-cat"><option>Estrutura</option><option>Pessoal</option><option>Marketing</option><option>Administrativo</option><option>Outros</option></select></label><label class="field">Valor (R$)<input id="n-val" type="number" inputmode="numeric" required min="1"></label><label class="field full">Data<input id="n-dt" type="date" required value="${HOJE}"></label><button class="btn full" type="submit" style="justify-content:center">Lançar</button></form>`}
  if(tipo==="convidar"){t="Convidar corretor";h=`<form class="form" id="fn"><label class="field full">Nome<input id="n-nome" required></label><label class="field full">E-mail<input id="n-email" type="email" required></label><label class="field">Papel<select id="n-papel"><option>Corretor</option><option>Dono</option></select></label><label class="field">Parte da comissão (%)<input id="n-com" type="number" step="5" value="40"></label><button class="btn full" type="submit" style="justify-content:center">Adicionar à equipe</button><p class="muted full" style="font-size:12.5px">No sistema real, a pessoa recebe um e-mail para criar a própria senha.</p></form>`}
  $("#sheet").innerHTML=`<div class="sheet-head"><h2 style="font-size:26px">${t}</h2><button class="x" data-close>Fechar</button></div>${h}`;ov.hidden=false;
@@ -1029,6 +1032,35 @@ function busca(){const ov=$("#ov");ov.classList.add("center");
   $("#br").innerHTML=h||`<p class="muted" style="margin-top:12px">Nada encontrado para "${esc(q.value)}".</p>`;
   $$("#br [data-r]").forEach(b=>b.onclick=()=>{const k=b.dataset.r[0],id=b.dataset.r.slice(1);if(k==="m"){TAB="resumo";ficha(id)}else editarLead(id)})};
  q.oninput=run;run()}
+const VEND="Corretor",PAPEIS=["Corretor","Dono"],COMLBL="Parte da comissão (%)";
+const donosAtivos=()=>EQ().filter(p=>p.papel==="Dono"&&p.ativo!==false);
+function formPessoa(id){const p=id?S.equipe.find(x=>x.id==id):null,eu=p&&USER&&USER.id===p.id,ov=$("#ov");ov.classList.remove("center");
+ $("#sheet").innerHTML=`<div class="sheet-head"><div><span class="lbl">Equipe e acessos</span><h2 style="font-size:26px;margin-top:4px">${p?"Editar "+esc(p.nome.split(" ")[0]):"Adicionar pessoa"}</h2></div><button class="x" data-close>Fechar</button></div>
+ <form class="form" id="fp"><label class="field full">Nome completo<input id="p-nome" required value="${p?esc(p.nome):""}"></label>
+ <label class="field">Usuário (para entrar)<input id="p-user" required autocapitalize="none" spellcheck="false" autocomplete="off" value="${p?esc(p.usuario):""}" placeholder="ex.: joao"></label>
+ <label class="field">Senha<span style="display:flex;gap:6px"><input id="p-senha" type="password" required autocomplete="new-password" value="${p?esc(p.senha):""}" style="flex:1;min-width:0" placeholder="mínimo 4 caracteres"><button type="button" class="btn xs soft" id="p-ver" style="flex:none">Mostrar</button></span></label>
+ <label class="field">Papel<select id="p-papel" ${eu?"disabled":""}>${PAPEIS.map(x=>`<option ${p&&p.papel===x?"selected":""}>${x}</option>`).join("")}</select></label>
+ <label class="field">${COMLBL}<input id="p-com" type="number" inputmode="decimal" step="5" min="0" value="${p?p.com:"40"}"></label>
+ <label class="field full">Acesso ao painel<select id="p-ativo" ${eu?"disabled":""}><option value="1" ${!p||p.ativo!==false?"selected":""}>Liberado</option><option value="0" ${p&&p.ativo===false?"selected":""}>Bloqueado (não consegue entrar)</option></select></label>
+ <p class="l-erro full" id="p-erro" hidden></p>
+ <button class="btn full" type="submit" style="justify-content:center">${p?"Salvar alterações":"Adicionar à equipe"}</button>
+ ${p&&!eu?'<button type="button" class="btn btn-del full" id="p-del" style="justify-content:center">Remover da equipe</button>':""}
+ ${eu?'<p class="muted full" style="font-size:12.5px">Você pode mudar o seu nome, usuário e senha. O seu papel e o seu acesso só outro dono pode mudar.</p>':'<p class="muted full" style="font-size:12.5px">Passe o usuário e a senha para a pessoa. Ela entra pelo endereço do painel. Se precisar trocar a senha, é só editar aqui.</p>'}</form>`;
+ ov.hidden=false;
+ $("#p-ver").onclick=()=>{const i=$("#p-senha"),m=i.type==="password";i.type=m?"text":"password";$("#p-ver").textContent=m?"Esconder":"Mostrar"};
+ const err=t=>{$("#p-erro").textContent=t;$("#p-erro").hidden=false};
+ $("#fp").onsubmit=e=>{e.preventDefault();const nome=$("#p-nome").value.trim(),u=$("#p-user").value.trim().toLowerCase(),sn=$("#p-senha").value,papel=eu?p.papel:$("#p-papel").value,ativo=eu?true:$("#p-ativo").value==="1",com=+$("#p-com").value||0;
+  if(!/^[a-z0-9._-]{3,20}$/.test(u))return err("O usuário precisa ter de 3 a 20 letras ou números, sem espaço e sem acento.");
+  if(S.equipe.some(x=>x.usuario===u&&(!p||x.id!==p.id)&&!x.removido))return err("Já existe alguém com o usuário \""+u+"\". Escolha outro.");
+  if(sn.length<4)return err("A senha precisa ter pelo menos 4 caracteres.");
+  if(p&&p.papel==="Dono"&&(papel!=="Dono"||!ativo)&&donosAtivos().length<2)return err("A loja precisa ter pelo menos um dono com acesso liberado.");
+  marca();
+  if(p){Object.assign(p,{nome,usuario:u,senha:sn,papel,ativo,com});if(eu){USER.nome=nome;try{sessionStorage.setItem(UKEY,JSON.stringify(USER))}catch(e){}}}
+  else S.equipe.push({id:Date.now(),nome,email:"",usuario:u,senha:sn,papel,ativo,com});
+  salvar();tudo();fechar();toast(p?"Dados de "+nome.split(" ")[0]+" atualizados.":nome.split(" ")[0]+" adicionado. Usuário: "+u,1)};
+ const del=$("#p-del");if(del)del.onclick=()=>{if(p.papel==="Dono"&&donosAtivos().length<2&&p.ativo!==false)return err("A loja precisa ter pelo menos um dono com acesso liberado.");
+  if(!del.classList.contains("sure")){del.classList.add("sure");del.textContent="Toque de novo para remover";setTimeout(()=>{if(del.isConnected){del.classList.remove("sure");del.textContent="Remover da equipe"}},4000);return}
+  marca();p.removido=true;p.ativo=false;salvar();tudo();fechar();toast(p.nome.split(" ")[0]+" removido. As vendas dele continuam no histórico.",1)}}
 function fechar(){$("#ov").hidden=true}
 function tudo(){renderVitrine();if(USER)renderPainel()}
 function tela(t){["vitrine","login","painel"].forEach(x=>$("#"+x).hidden=x!==t);$("#back-painel").hidden=!(t==="vitrine"&&USER);menu(false);scrollTo(0,0)}
@@ -1047,7 +1079,8 @@ document.addEventListener("click",e=>{
  const ver=t.closest("[data-ver]");if(ver){verImovel(ver.dataset.ver);return}
  const cr=t.closest("[data-im]");if(cr&&!t.closest(".sheet")){TAB="resumo";ficha(cr.dataset.im);return}
  const go=t.closest("[data-go]");if(go){secao(go.dataset.go);return}
- const ac=t.closest("[data-act]");if(ac){formNovo(ac.dataset.act);return}
+ const pb=t.closest("[data-pessoa]");if(pb){formPessoa(pb.dataset.pessoa);return}
+ const ac=t.closest("[data-act]");if(ac){if(ac.dataset.act==="pessoa-nova"){formPessoa();return}formNovo(ac.dataset.act);return}
  const ed=t.closest("[data-ed]");if(ed){editarLead(ed.dataset.ed);return}
  const mv=t.closest("[data-mv]");if(mv){marca();const l=S.leads.find(x=>x.id==mv.dataset.mv),i=ETAPAS.indexOf(l.etapa)+ +mv.dataset.d;const nv=ETAPAS[Math.max(0,Math.min(ETAPAS.length-1,i))];if(nv!==l.etapa){(l.hist=l.hist||[]).push({data:HOJE,txt:l.etapa+" → "+nv});l.etapa=nv;l.data=HOJE}salvar();tudo();toast(l.nome+" → "+l.etapa,1);return}
  const ld=t.closest("[data-lead]");if(ld&&!t.closest(".sheet")){editarLead(ld.dataset.lead);return}
@@ -1067,11 +1100,11 @@ $("#e-q").addEventListener("input",renderCarteira);
 $("#l-voltar").onclick=()=>{renderVitrine();tela("vitrine")};
 $("#menu-btn").onclick=()=>menu(!$("#side").classList.contains("open"));$("#scrim").onclick=()=>menu(false);
 $("#back-painel").onclick=()=>{tela("painel");renderPainel()};
-const CONTAS={admin:{senha:"1234",nome:"Ricardo Moura",papel:"Dono"},vendedor:{senha:"1234",nome:"Aline Duarte",papel:"Corretor"}};
-$("#f-login").onsubmit=e=>{e.preventDefault();const u=$("#l-user").value.trim().toLowerCase(),c=CONTAS[u];
- if(!c||$("#l-senha").value!==c.senha){$("#l-erro").hidden=false;$("#l-senha").value="";$("#l-senha").focus();return}
- $("#l-erro").hidden=true;USER={nome:c.nome,papel:c.papel};try{sessionStorage.setItem("chave-user",JSON.stringify(USER))}catch(e){}
- $("#l-user").value="";$("#l-senha").value="";tela("painel");renderPainel();secao("geral");toast(c.papel==="Dono"?"Entrou como dono: acesso completo.":"Entrou como corretora: comissões da imobiliária e financeiro ficam escondidos.")};
+const UKEY="chave-user";
+$("#f-login").onsubmit=e=>{e.preventDefault();const u=$("#l-user").value.trim().toLowerCase(),sn=$("#l-senha").value,c=EQ().find(p=>p.usuario===u&&p.senha===sn);
+ if(!c||c.ativo===false){$("#l-erro").textContent=c?"Seu acesso está bloqueado. Fale com o dono da loja.":"Usuário ou senha incorretos. Confira e tente de novo.";$("#l-erro").hidden=false;$("#l-senha").value="";$("#l-senha").focus();return}
+ $("#l-erro").hidden=true;USER={id:c.id,nome:c.nome,papel:c.papel};try{sessionStorage.setItem(UKEY,JSON.stringify(USER))}catch(e){}
+ $("#l-user").value="";$("#l-senha").value="";tela("painel");renderPainel();secao("geral");toast(c.papel==="Dono"?"Entrou como dono: acesso completo.":c.papel==="Corretor"?"Entrou como corretor: comissões da imobiliária e financeiro ficam escondidos.":"Entrou como "+c.papel.toLowerCase()+".")};
 $("#l-user").oninput=$("#l-senha").oninput=()=>{$("#l-erro").hidden=true};
 $("#sair").onclick=()=>{USER=null;try{sessionStorage.removeItem("chave-user")}catch(e){}tela("login")};
 $("#ver-site").onclick=$("#ver-site2").onclick=()=>{renderVitrine();tela("vitrine");toast("Este é o site que o cliente vê. O botão de voltar ao painel só aparece para você.")};
@@ -1082,7 +1115,7 @@ function temaUI(){const d=document.documentElement.getAttribute("data-theme")===
 function alternaTema(){const d=document.documentElement.getAttribute("data-theme")!=="dark";document.documentElement.setAttribute("data-theme",d?"dark":"light");try{localStorage.setItem("tema",d?"escuro":"claro")}catch(e){}temaUI();if(USER)renderPainel()}
 document.addEventListener("click",e=>{if(e.target.closest("[data-tema]")){alternaTema()}});
 temaUI();
-function rota(){const mc=location.hash.match(/^#imovel-(\d+)$/);if(mc){renderVitrine();tela("vitrine");verImovel(+mc[1]);return}const loj=/\/painel\/?$/.test(location.pathname)||location.hash==="#painel";renderVitrine();
+function rota(){if(USER){const m=USER.id&&S.equipe.find(p=>p.id===USER.id);if(!m||m.removido||m.ativo===false){USER=null;try{sessionStorage.removeItem(UKEY)}catch(e){}}else{USER.nome=m.nome;USER.papel=m.papel}}const mc=location.hash.match(/^#imovel-(\d+)$/);if(mc){renderVitrine();tela("vitrine");verImovel(+mc[1]);return}const loj=/\/painel\/?$/.test(location.pathname)||location.hash==="#painel";renderVitrine();
  if(loj){if(USER){tela("painel");renderPainel();secao("geral")}else tela("login")}else tela("vitrine")}
 addEventListener("hashchange",rota);rota();
 </script>
